@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="css/whitespace-reset.css">
+  <link rel="stylesheet" href="css/style.css">
+  <title>jQuery Contact Manager</title>
+</head>
+
+<body>
+  <header>
+    <h1>Contact Manager</h1>
+    <h3>Using Localstorage, Handlebars, and jQuery</h3>
+  </header>
+  <main>
+  <div id="home">
+    <aside>
+      <h4>Tags</h4>
+      <div class="container">
+
+          <script id="tags-template" type="text/x-handlebars">
+            {{#if tags}}
+              <ul>
+                <li class="select-all">
+                  <label><input type="checkbox" id="all" checked>ALL TAGS</label>
+                </li>
+                {{#each tags}}
+                  {{> tag}}
+                {{/each}}
+              </ul>
+              {{else}}
+                <p>No tags yet</p>
+              {{/if}}
+          </script>
+          <script id="tag-template" type="text/x-handlebars">
+            <li>
+              <label><input type="checkbox" id="{{this}}" class="checkbox-tag" checked>{{this}}</label>
+            </li>
+        </script>
+      </div>
+    </aside>
+
+    <section class="contacts">
+      <script id="card-section-template" type="text/x-handlebars">
+        <div class="toolbar">
+          <div class="button create">
+            <a href="/#contacts/new" class="create">Add Contact</a>
+          </div>
+
+          <input type="text" class="search" placeholder="Search">
+        </div>
+        {{#if contacts}}
+          <section class="rolodex">
+            {{#each contacts}}
+              {{> card}}
+            {{/each}}
+            <div class="no-results">
+              <p>No results!</p>
+            </div>
+          </section>
+        {{else}}
+          <section class="no-cards">
+            <p>No contacts yet!</p>
+            <div class="button">
+              <a href="#contacts/new" class="create">Add Contact</a>
+            </div>
+          </section>
+        {{/if}}
+      </script>
+
+      <script id="card-template" type="text/x-handlebars">
+        <div class="card" data-id="{{id}}">
+            <h3>{{name}}</h3>
+            <dl>
+              <dt>Phone Number:</dt>
+              <dd>{{phone}}</dd>
+              <dt>Email:</dt>
+              <dd>{{email}}</dd>
+              <dt>Tags:</dt>
+              <dd>
+                {{#each tags}}
+                  <span class="tag">|{{this}}|</span>
+                {{/each}}
+              </dd>
+            </dl>
+            <div class="button edit"><a href="#contacts/edit/{{id}}">Edit</a></div>
+            <div class="button delete"><a href="#contacts/delete/{{id}}">Delete</a></div>
+          </div>
+      </script>
+
+    </section>
+
+    <script id="edit" type="text/x-handlebars">
+      {{> contactForm action="edit"}}
+    </script>
+
+    <script id="create" type="text/x-handlebars">
+      {{> contactForm action="create"}}
+    </script>
+
+    <script id="contactForm" type="text/x-handlebars">
+        <form class="contact-form" id="{{action}}-form" {{#if id}}data-id="{{id}}"{{/if}}>
+          <div>
+            <h2>{{action}} Contact</h2>
+            <ul>
+              <li>
+                <label for="name">Full Name:</label>
+                <input type="text" id="name" name="name" {{#if name}}value="{{name}}"{{/if}}>
+              </li>
+              <li>
+                <label for="email">Email address:</label>
+                <input type="email" id="email" name="email" {{#if email}}value="{{email}}"{{/if}}>
+              </li>
+              <li>
+                <label for="phone">Telephone number:</label>
+                <input type="tel" id="phone" name="phone" {{#if phone}}value="{{phone}}"{{/if}}>
+              </li>
+              <li>
+                <label for="tags">Tags</label>
+                <input type="text" id="tags" name="tags"{{#if tags}} value="{{join tags}}"{{else}} placeholder="Enter tags seperated by comma"{{/if}}>
+              </li>
+              <li>
+                <input class="input-button" type="submit" value="{{action}}">
+                <input class="input-button cancel" type="button" value="Cancel">
+              </li>
+            </ul>
+          </div>
+        </form>
+    </script>
+  </main>
+  <footer>
+    <a href="http://github.com/rafaeldwan">I made this!</a>
+  </footer>
+  <script
+    src="https://code.jquery.com/jquery-3.2.1.min.js"
+    integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.js"></script>
+  <script src="scripts/contact_manager.js"></script>
+</body>
+</html>
