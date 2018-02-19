@@ -113,7 +113,11 @@ var app = {
     }.bind(this));
 
     $('main').on('change', '#all', function(e) {
-      this.toggleAllTags(e);
+      this.toggleAllTags();
+    }.bind(this));
+
+    $('main').on('click', '.tag', function(e) {
+      this.showOnlyTargetTag(e);
     }.bind(this));
 
     $(window).on('popstate', function() {
@@ -327,8 +331,8 @@ var app = {
     }.bind(this));
   },
 
-  toggleAllTags(e) {
-    if (e.target.checked) {
+  toggleAllTags() {
+    if ($('#all').get(0).checked) {
       $('.checkbox-tag').each(function() {
         if (!this.checked) {
           this.click();
@@ -341,6 +345,16 @@ var app = {
         }
       });
     }
+  },
+
+  showOnlyTargetTag(e) {
+    if ($('#all').get(0).checked) {
+      $('#all').click();
+    } else {
+      this.toggleAllTags();
+    }
+    console.log(e.target.textContent)
+    $('#' + e.target.textContent).click();
   },
 
   saveLocal() {

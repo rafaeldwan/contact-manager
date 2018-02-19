@@ -69,6 +69,10 @@ aside input {
   margin-right: 5px;
 }
 
+.tag {
+  cursor: pointer;
+}
+
 
 .toolbar {
   text-align: right;
