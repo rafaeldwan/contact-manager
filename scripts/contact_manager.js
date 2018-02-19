@@ -15,9 +15,11 @@ var app = {
     }, 0);
     this.parseURL();
   },
+
   compileTemplate(id) {
     return Handlebars.compile($(id).html());
   },
+
   compileTemplates() {
     this.tagsTemplate = this.compileTemplate('#tags-template');
     this.tagTemplate = this.compileTemplate('#tag-template');
@@ -29,32 +31,41 @@ var app = {
     Handlebars.registerPartial('contactForm', $('#contactForm').html());
     Handlebars.registerPartial('card', $('#card-template').html());
     Handlebars.registerPartial('tag', $('#tag-template').html());
+
+    Handlebars.registerHelper('join', function(arr) {
+      return arr.join(', ');
+    });
   },
+
   renderTemplates() {
     this.renderTagsTemplate();
     this.renderCards();
   },
+
   renderTagsTemplate() {
     var tags = this.tags.map(function(tag) {
       return tag.name;
     });
     $('aside .container').empty().append(this.tagsTemplate({tags: tags}));
   },
+
   renderCards() {
     $('.contacts').empty().append(this.cardSectionTemplate({contacts: this.contacts}));
   },
+
   bindEvents() {
     $(document).on('click', '.create', function(e) {
       e.preventDefault();
       e.stopPropagation();
+
       history.pushState({action: 'create'}, 'Create', '#contacts/new');
       this.showCreateForm();
-
     }.bind(this));
 
     $(document).on('click', '.edit', function(e) {
       e.preventDefault();
       var contactId = this.getIdFromUrl(e.target.href);
+
       history.pushState({action: 'edit', contact: contactId}, 'Edit', '#contacts/edit/' + contactId)
       this.showEditForm(contactId);
     }.bind(this));
@@ -62,32 +73,36 @@ var app = {
     $(document).on('click', '.delete', function(e) {
       e.preventDefault();
       e.stopPropagation();
-
       var targetId = $(e.target).parents('.card').data('id');
+
       this.delete(targetId);
     }.bind(this));
 
     $(document).on('click', '.cancel', function(e) {
       e.preventDefault;
       var $form = $(e.target).parents('form');
+
       this.pushHomeState();
       this.hideForm($form);
     }.bind(this));
 
     $(document).on('submit', '#create-form', function(e) {
       e.preventDefault();
+
       this.formSubmit(e, 'create');
       this.pushHomeState()
     }.bind(this));
 
     $(document).on('submit', '#edit-form', function(e) {
       e.preventDefault();
+
       this.formSubmit(e, 'edit');
       this.pushHomeState()
     }.bind(this));
 
     $(document).on('keyup', '.search', function(e) {
       clearTimeout(search.timeout);
+
       search.timeout = setTimeout(function() {
         search.exe(e);
       }, 400);
@@ -104,7 +119,7 @@ var app = {
     $(window).on('popstate', function() {
       this.hideForm(this.visibleForm());
       this.parseURL();
-    }.bind(this))
+    }.bind(this));
 
     $(window).on('unload', function() {
       this.saveLocal();
@@ -137,31 +152,45 @@ var app = {
   },
 
   visibleForm() {
-    return $('form').filter(function() {return $(this).css('display')==='block'});
+    return $('form').filter(function() {
+      return $(this).css('display') ==='block';
+    });
   },
 
   registerContact(contact) {
     this.contacts.push(contact);
+
     if (this.contacts.length === 1) {
       this.renderCards();
     } else {
       $('.rolodex').append(this.cardTemplate(contact));
     }
+
     this.registerTags(contact.tags);
   },
 
   updateContact(contact) {
-    var currentIdx = this.findIndex(contact.id)
-    this.updateTags(contact.id, currentIdx);
-    this.contacts.splice(currentIdx, 1, contact);
+    var currentIdx = this.findContactIdx(contact.id);
     var html = this.cardTemplate(contact);
+
+    this.updateTags(currentIdx);
+
+    this.contacts.splice(currentIdx, 1, contact);
+
     $('.card[data-id="' + contact.id + '"]').replaceWith(html);
+
     this.registerTags(contact.tags);
   },
 
-  findIndex(id) {
+  findContactIdx(id) {
     return this.contacts.findIndex(function(oldContact) {
       return oldContact.id === id;
+    });
+  },
+
+  findTagIdx(tag) {
+    return this.tags.findIndex(function(existingTag) {
+      return existingTag.name === tag;
     });
   },
 
@@ -169,10 +198,9 @@ var app = {
     if (tags.length === 0) {
       return;
     }
+
     tags.forEach(function(tag) {
-      var tagIndex = this.tags.findIndex(function(existingTag) {
-        return existingTag.name === tag;
-      });
+      var tagIndex = this.findTagIdx(tag);
 
       if (tagIndex === -1) {
         this.tags.push(new Tag(tag));
@@ -224,16 +252,14 @@ var app = {
     var href = document.location.href;
     var action = '';
     var id;
-    if (href.indexOf('#home') !== -1 || href.indexOf('#') === -1 ) {
 
-
-    } else {
+    if (href.indexOf('#home') === -1 && href.indexOf('#') !== -1 ) {
       action = this.getActionFromUrl(href);
 
       switch (action) {
       case 'delete':
         id = this.getIdFromUrl(href);
-        if (this.findIndex(id) !== -1) {
+        if (this.findContactIdx(id) !== -1) {
           this.delete(id);
         }
         break;
@@ -242,7 +268,7 @@ var app = {
         break;
       case 'edit':
         id = this.getIdFromUrl(href);
-        if (this.findIndex(id) !== -1) {
+        if (this.findContactIdx(id) !== -1) {
           this.showEditForm(id);
         }
         break;
@@ -252,11 +278,11 @@ var app = {
 
   getActionFromUrl(url) {
     if (url.indexOf('delete') !== -1) {
-      return 'delete'
+      return 'delete';
     } else if (url.indexOf('new') !== -1) {
-      return 'create'
+      return 'create';
     } else if (url.indexOf('edit') !== -1) {
-      return 'edit'
+      return 'edit';
     }
   },
 
@@ -282,7 +308,8 @@ var app = {
           $('.card[data-id="' + contact.id + '"]').show();
         } else {
           appTag.checked = false;
-          var inactiveTagCount =  contact.tags.reduce(function(count, tag) {
+
+          var inactiveTagCount = contact.tags.reduce(function(count, tag) {
             if (!this.tags.find(function(appTag) {
               return appTag.name === tag;
             }).checked) {
@@ -290,9 +317,11 @@ var app = {
             }
             return count;
           }.bind(this), 0);
+
           if (inactiveTagCount === contact.tags.length) {
             $('.card[data-id="' + contact.id + '"]').hide();
           }
+
         }
       }
     }.bind(this));
@@ -339,8 +368,10 @@ var app = {
     }
 
   },
+
   loadLocalTags() {
     var localTags = localStorage.getItem('tags');
+
     if (localTags !== 'undefined' && localTags !== null) {
       this.tags = JSON.parse(localTags);
     } else {
@@ -348,8 +379,9 @@ var app = {
     }
   },
 
-  updateTags(id, contactIdx) {
+  updateTags(contactIdx) {
     var contactTags = this.contacts[contactIdx].tags;
+
     for (var i = this.tags.length - 1; i >= 0; i--) {
       var tag = this.tags[i];
 
@@ -365,11 +397,11 @@ var app = {
   },
 
   delete(targetId) {
-    var contactIdx = this.findIndex(targetId);
+    var contactIdx = this.findContactIdx(targetId);
 
     if (confirm('Delete this contact?')) {
       $('.card[data-id="' + targetId + '"]').remove();
-      this.updateTags(targetId, contactIdx);
+      this.updateTags(contactIdx);
       this.contacts.splice(contactIdx, 1);
 
       if (this.contacts.length === 0) {
@@ -392,10 +424,12 @@ var Contact = {
   generateId() {
     return ++this.lastId;
   },
+
   processTags(formData) {
     var tags = formData.tags.split(/\s*,\s*/).filter(function(tag) {
       return tag !== '';
     });
+
     return tags.reduce(function(arr, tag) {
       if (arr.indexOf(tag) === -1) {
         arr.push(tag);
@@ -437,9 +471,5 @@ var search = {
     });
   },
 };
-
-Handlebars.registerHelper('join', function(arr) {
-  return arr.join(', ');
-});
 
 app.init();

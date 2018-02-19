@@ -34,7 +34,7 @@ header {
   margin-bottom: 20px;
   text-align: center;
   width: 100%;
-  background: linear-gradient(#6F5E5C 30%, #A28497);
+  background: linear-gradient(rgb(70, 64, 63) 30%, #A28497);
 
 }
 
