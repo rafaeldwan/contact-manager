@@ -266,6 +266,7 @@ var app = {
         if (this.findContactIdx(id) !== -1) {
           this.delete(id);
         }
+        this.pushHomeState();
         break;
       case 'create':
         this.showCreateForm();
@@ -303,6 +304,10 @@ var app = {
       return tag.name === changedTag;
     });
 
+
+    search.emptyIfPopulated();
+
+
     this.contacts.forEach(function(contact) {
       if (contact.tags.find(function(tag) {
         return tag === changedTag;
@@ -312,6 +317,7 @@ var app = {
           $('.card[data-id="' + contact.id + '"]').show();
         } else {
           appTag.checked = false;
+          $('#all').prop('checked', false);
 
           var inactiveTagCount = contact.tags.reduce(function(count, tag) {
             if (!this.tags.find(function(appTag) {
@@ -329,6 +335,9 @@ var app = {
         }
       }
     }.bind(this));
+
+    this.allNoneOrSomeChecked();
+
   },
 
   toggleAllTags() {
@@ -348,13 +357,46 @@ var app = {
   },
 
   showOnlyTargetTag(e) {
-    if ($('#all').get(0).checked) {
+    if ($('#all').prop('checked')) {
       $('#all').click();
     } else {
       this.toggleAllTags();
     }
-    console.log(e.target.textContent)
     $('#' + e.target.textContent).click();
+  },
+
+  checkAllTags(searchString) {
+    if ($('#all').prop('checked')) {
+      this.toggleAllTags();
+    } else {
+      $('#all').click();
+    }
+
+    if (searchString) {
+      $('.search').val(searchString);
+    }
+  },
+
+  allNoneOrSomeChecked() {
+    var $noResults = $('.no-results');
+    var checkedCount = this.tags.reduce(function(count, tag) {
+      if (tag.checked) {
+        count++;
+      }
+      return count;
+    }, 0);
+
+    if (checkedCount === 0) {
+      $('#all').prop('checked', false);
+      $noResults.show();
+    } else {
+      if ($noResults.css('display') === 'block') {
+        $noResults.hide();
+      }
+      if (checkedCount === this.tags.length) {
+        $('#all').prop('checked', true);
+      }
+    }
   },
 
   saveLocal() {
@@ -461,11 +503,20 @@ function Tag(name)  {
 
 var search = {
   timeout: null,
+
+  emptyIfPopulated() {
+    if ($('.search').val() !== '') {
+      $('.search').val('');
+      $('.card').show();
+    }
+  },
+
   exe(e) {
     var nameExp = new RegExp(e.target.value, 'i');
     var $noResults = $('.no-results');
     var hideCount = 0;
 
+    app.checkAllTags(e.target.value);
     app.contacts.forEach(function(contact) {
       if (nameExp.test(contact.name)) {
         // easy to add email to search by || nameExp.test(contact.email) here
