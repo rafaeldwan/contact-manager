@@ -1,6 +1,6 @@
 html {
   box-sizing: border-box;
-  color: #271C1C;
+  color: #3C362A;
   font: normal 20px/1.5 helvetica, arial, sans-serif;
   text-align: justify;
 }
@@ -10,13 +10,17 @@ html {
 }
 
 form h2, h4, .input-button {
+  padding: 5px;
   text-transform: capitalize;
   text-align: center;
 }
 
+.input-buttons {
+  text-align: right;
+  padding: 10px 5% 0;
+}
+
 #home {
-  border-top: 1px solid black;
-  border-bottom: 1px solid black;
 
   background: white;
   display: flex;
@@ -27,13 +31,33 @@ form h2, h4, .input-button {
 }
 
 header {
+  margin-bottom: 20px;
   text-align: center;
   width: 100%;
+  background: linear-gradient(#6F5E5C 30%, #A28497);
+
 }
 
-main {position: relative;}
+h1, h3 {
+  color: rgb(238, 238, 238);
+}
+
+#home h3, a {
+  color: #3C362A
+
+}
+
+a:visited {
+  color: #A28497;
+}
+
+
+main {
+  position: relative;
+}
 
 aside {
+  background-color: white;
   width: 20%;
   padding: 10px 10px 10px 25px;;
   margin: 5px 0;
@@ -78,10 +102,11 @@ aside input {
 }
 
 .card {
+  background-color: #white;
   border-radius: 5px;
   width: 200px;
   padding: .25rem;
-  border: 1px solid grey;
+  border: 1px solid lightgrey;
   margin: 0.5rem;
   text-align: left;
   overflow-wrap: break-word;
@@ -89,7 +114,7 @@ aside input {
 
 .contact-form {
   background: white;
-  border: 1px solid grey;
+  border: 0 1px solid grey;
   display: none;
   height: 100%;
   bottom: 0;
