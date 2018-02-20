@@ -90,14 +90,14 @@ var app = {
       e.preventDefault();
 
       this.formSubmit(e, 'create');
-      this.pushHomeState()
+      this.pushHomeState();
     }.bind(this));
 
     $(document).on('submit', '#edit-form', function(e) {
       e.preventDefault();
 
       this.formSubmit(e, 'edit');
-      this.pushHomeState()
+      this.pushHomeState();
     }.bind(this));
 
     $(document).on('keyup', '.search', function(e) {
@@ -112,7 +112,7 @@ var app = {
       this.filterByTag(e);
     }.bind(this));
 
-    $('main').on('change', '#all', function(e) {
+    $('main').on('change', '#all', function() {
       this.toggleAllTags();
     }.bind(this));
 
@@ -249,7 +249,7 @@ var app = {
   },
 
   pushHomeState() {
-    history.pushState({}, 'Home', '/#home');
+    history.pushState({}, 'Home', '#home');
   },
 
   parseURL() {
@@ -362,7 +362,11 @@ var app = {
     } else {
       this.toggleAllTags();
     }
-    $('#' + e.target.textContent).click();
+    console.log(e.target.textContent)
+    $('.checkbox-tag').filter(function(el) {
+      console.log($(this).parent().text())
+      return $(this).parent().text() ===  e.target.textContent;
+    }).click();
   },
 
   checkAllTags(searchString) {
