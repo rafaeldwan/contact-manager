@@ -1,11 +1,12 @@
 var app = {
   tags: [],
   contacts: [],
+
   init() {
     this.loadLocalTags();
     this.loadLocalContacts();
-    this.compileTemplates();
-    this.renderTemplates();
+    templates.compileAll();
+    templates.render();
     this.bindEvents();
     Contact.lastId = this.contacts.reduce(function(max, current) {
       if (current.id > max) {
@@ -16,58 +17,21 @@ var app = {
     this.parseURL();
   },
 
-  compileTemplate(id) {
-    return Handlebars.compile($(id).html());
-  },
-
-  compileTemplates() {
-    this.tagsTemplate = this.compileTemplate('#tags-template');
-    this.tagTemplate = this.compileTemplate('#tag-template');
-    this.cardTemplate = this.compileTemplate('#card-template');
-    this.cardSectionTemplate = this.compileTemplate('#card-section-template');
-    this.editTemplate = this.compileTemplate('#edit');
-    this.createTemplate = this.compileTemplate('#create');
-
-    Handlebars.registerPartial('contactForm', $('#contactForm').html());
-    Handlebars.registerPartial('card', $('#card-template').html());
-    Handlebars.registerPartial('tag', $('#tag-template').html());
-
-    Handlebars.registerHelper('join', function(arr) {
-      return arr.join(', ');
-    });
-  },
-
-  renderTemplates() {
-    this.renderTagsTemplate();
-    this.renderCards();
-  },
-
-  renderTagsTemplate() {
-    var tags = this.tags.map(function(tag) {
-      return tag.name;
-    });
-    $('aside .container').empty().append(this.tagsTemplate({tags: tags}));
-  },
-
-  renderCards() {
-    $('.contacts').empty().append(this.cardSectionTemplate({contacts: this.contacts}));
-  },
-
   bindEvents() {
     $(document).on('click', '.create', function(e) {
       e.preventDefault();
       e.stopPropagation();
 
       history.pushState({action: 'create'}, 'Create', '#contacts/new');
-      this.showCreateForm();
+      view.showCreateForm();
     }.bind(this));
 
     $(document).on('click', '.edit', function(e) {
       e.preventDefault();
       var contactId = this.getIdFromUrl(e.target.href);
 
-      history.pushState({action: 'edit', contact: contactId}, 'Edit', '#contacts/edit/' + contactId)
-      this.showEditForm(contactId);
+      history.pushState({action: 'edit', contact: contactId}, 'Edit', '#contacts/edit/' + contactId);
+      view.showEditForm(contactId);
     }.bind(this));
 
     $(document).on('click', '.delete', function(e) {
@@ -83,7 +47,7 @@ var app = {
       var $form = $(e.target).parents('form');
 
       this.pushHomeState();
-      this.hideForm($form);
+      view.hideForm($form);
     }.bind(this));
 
     $(document).on('submit', '#create-form', function(e) {
@@ -109,19 +73,19 @@ var app = {
     });
 
     $('main').on('change', '.checkbox-tag', function(e) {
-      this.filterByTag(e);
+      view.filterByTag(e);
     }.bind(this));
 
     $('main').on('change', '#all', function() {
-      this.toggleAllTags();
-    }.bind(this));
+      view.toggleAllTags();
+    });
 
     $('main').on('click', '.tag', function(e) {
-      this.showOnlyTargetTag(e);
-    }.bind(this));
+      view.showOnlyTargetTag(e);
+    });
 
     $(window).on('popstate', function() {
-      this.hideForm(this.visibleForm());
+      view.hideForm(view.visibleForm());
       this.parseURL();
     }.bind(this));
 
@@ -130,44 +94,13 @@ var app = {
     }.bind(this));
   },
 
-  showCreateForm() {
-    $('main').append(this.createTemplate);
-    $('#create-form').slideDown();
-  },
-
-  showEditForm(contactId) {
-    var contact = this.contacts.find(function(contact) {
-      return contact.id === contactId;
-    });
-
-    if (contact) {
-      $('main').append(this.editTemplate(contact));
-      $('#edit-form').slideDown();
-    } else {
-      this.pushHomeState();
-      this.parseURL();
-    }
-  },
-
-  hideForm($form) {
-    $form.slideToggle(400, function() {
-      $form.remove();
-    });
-  },
-
-  visibleForm() {
-    return $('form').filter(function() {
-      return $(this).css('display') ==='block';
-    });
-  },
-
   registerContact(contact) {
     this.contacts.push(contact);
 
     if (this.contacts.length === 1) {
-      this.renderCards();
+      templates.renderCards();
     } else {
-      $('.rolodex').append(this.cardTemplate(contact));
+      $('.rolodex').append(templates.card(contact));
     }
 
     this.registerTags(contact.tags);
@@ -175,7 +108,7 @@ var app = {
 
   updateContact(contact) {
     var currentIdx = this.findContactIdx(contact.id);
-    var html = this.cardTemplate(contact);
+    var html = templates.card(contact);
 
     this.updateTags(currentIdx);
 
@@ -209,9 +142,9 @@ var app = {
       if (tagIndex === -1) {
         this.tags.push(new Tag(tag));
         if (this.tags.length > 1) {
-          $('aside ul').append(this.tagTemplate(tag));
+          $('aside ul').append(templates.tag(tag));
         } else if (this.tags.length === 1) {
-          this.renderTagsTemplate();
+          templates.renderTags();
         }
       } else {
         this.tags[tagIndex].count++;
@@ -222,12 +155,13 @@ var app = {
   formSubmit(e, action) {
     var $target = $(e.target);
     var results = {};
+
     $target.serializeArray().forEach(function(input) {
       results[input.name] = input.value.trim();
     });
 
     if (this.verifyInput(results)) {
-      this.hideForm($target);
+      view.hideForm($target);
 
       if (action === 'create') {
         results.id = Contact.generateId();
@@ -269,12 +203,12 @@ var app = {
         this.pushHomeState();
         break;
       case 'create':
-        this.showCreateForm();
+        view.showCreateForm();
         break;
       case 'edit':
         id = this.getIdFromUrl(href);
         if (this.findContactIdx(id) !== -1) {
-          this.showEditForm(id);
+          view.showEditForm(id);
         }
         break;
       }
@@ -297,112 +231,6 @@ var app = {
     return parseInt(url.slice(idIdx));
   },
 
-  filterByTag(e) {
-    var checked = e.target.checked;
-    var changedTag = e.target.id;
-    var appTag = this.tags.find(function(tag) {
-      return tag.name === changedTag;
-    });
-
-
-    search.emptyIfPopulated();
-
-
-    this.contacts.forEach(function(contact) {
-      if (contact.tags.find(function(tag) {
-        return tag === changedTag;
-      })) {
-        if (checked) {
-          appTag.checked = true;
-          $('.card[data-id="' + contact.id + '"]').show();
-        } else {
-          appTag.checked = false;
-          $('#all').prop('checked', false);
-
-          var inactiveTagCount = contact.tags.reduce(function(count, tag) {
-            if (!this.tags.find(function(appTag) {
-              return appTag.name === tag;
-            }).checked) {
-              count++;
-            }
-            return count;
-          }.bind(this), 0);
-
-          if (inactiveTagCount === contact.tags.length) {
-            $('.card[data-id="' + contact.id + '"]').hide();
-          }
-
-        }
-      }
-    }.bind(this));
-
-    this.allNoneOrSomeChecked();
-
-  },
-
-  toggleAllTags() {
-    if ($('#all').get(0).checked) {
-      $('.checkbox-tag').each(function() {
-        if (!this.checked) {
-          this.click();
-        }
-      })
-    } else {
-      $('.checkbox-tag').each(function() {
-        if (this.checked) {
-          this.click();
-        }
-      });
-    }
-  },
-
-  showOnlyTargetTag(e) {
-    if ($('#all').prop('checked')) {
-      $('#all').click();
-    } else {
-      this.toggleAllTags();
-    }
-    console.log(e.target.textContent)
-    $('.checkbox-tag').filter(function(el) {
-      console.log($(this).parent().text())
-      return $(this).parent().text() ===  e.target.textContent;
-    }).click();
-  },
-
-  checkAllTags(searchString) {
-    if ($('#all').prop('checked')) {
-      this.toggleAllTags();
-    } else {
-      $('#all').click();
-    }
-
-    if (searchString) {
-      $('.search').val(searchString);
-    }
-  },
-
-  allNoneOrSomeChecked() {
-    var $noResults = $('.no-results');
-    var checkedCount = this.tags.reduce(function(count, tag) {
-      if (tag.checked) {
-        count++;
-      }
-      return count;
-    }, 0);
-
-    if (checkedCount === 0) {
-      $('#all').prop('checked', false);
-      $noResults.show();
-    } else {
-      if ($noResults.css('display') === 'block') {
-        $noResults.hide();
-      }
-      if (checkedCount === this.tags.length) {
-        $('#all').prop('checked', true);
-      }
-    }
-  },
-
   saveLocal() {
     this.saveContacts();
     this.saveTags();
@@ -422,11 +250,12 @@ var app = {
     var localContacts = localStorage.getItem('contacts');
 
     if (localContacts !== 'undefined' && localContacts !== null) {
-      this.contacts = JSON.parse(localContacts);
+      this.contacts = JSON.parse(localContacts).map(function(contact) {
+        return Object.create(Contact).restore(contact);
+      });
     } else {
       this.contacts = [];
     }
-
   },
 
   loadLocalTags() {
@@ -440,6 +269,9 @@ var app = {
   },
 
   updateTags(contactIdx) {
+    // used after a contact delete or edit.
+    // removes a tag from memory and display if no longer present
+    // on any contact
     var contactTags = this.contacts[contactIdx].tags;
 
     for (var i = this.tags.length - 1; i >= 0; i--) {
@@ -450,7 +282,7 @@ var app = {
 
         if (tag.count === 0) {
           this.tags.splice(i, 1);
-          this.renderTagsTemplate();
+          templates.renderTags();
         }
       }
     }
@@ -465,7 +297,180 @@ var app = {
       this.contacts.splice(contactIdx, 1);
 
       if (this.contacts.length === 0) {
-        this.renderCards();
+        templates.renderCards();
+      }
+    }
+  },
+};
+
+var templates = {
+  compile(id) {
+    return Handlebars.compile($(id).html());
+  },
+
+  compileAll() {
+    this.tags = this.compile('#tags-template');
+    this.tag = this.compile('#tag-template');
+    this.card = this.compile('#card-template');
+    this.cardSection = this.compile('#card-section-template');
+    this.edit = this.compile('#edit');
+    this.create = this.compile('#create');
+
+    Handlebars.registerPartial('contactForm', $('#contactForm').html());
+    Handlebars.registerPartial('card', $('#card-template').html());
+    Handlebars.registerPartial('tag', $('#tag-template').html());
+
+    Handlebars.registerHelper('join', function(arr) {
+      return arr.join(', ');
+    });
+  },
+
+  render() {
+    this.renderTags();
+    this.renderCards();
+  },
+
+  renderTags() {
+    var tagNames = app.tags.map(function(tag) {
+      return tag.name;
+    });
+    $('aside .container').empty().append(this.tags({tags: tagNames}));
+  },
+
+  renderCards() {
+    $('.contacts').empty().append(this.cardSection({contacts: app.contacts}));
+  },
+};
+
+var view = {
+  showCreateForm() {
+    $('main').append(templates.create);
+    $('#create-form').slideDown();
+  },
+
+  showEditForm(contactId) {
+    var contact = app.contacts.find(function(contact) {
+      return contact.id === contactId;
+    });
+
+    if (contact) {
+      $('main').append(templates.edit(contact));
+      $('#edit-form').slideDown();
+    } else {
+      app.pushHomeState();
+      app.parseURL();
+    }
+  },
+
+  hideForm($form) {
+    $form.slideToggle(400, function() {
+      $form.remove();
+    });
+  },
+
+  visibleForm() {
+    return $('form').filter(function() {
+      return $(this).css('display') === 'block';
+    });
+  },
+
+  filterByTag(e) {
+    search.reset();
+
+    app.contacts.forEach(function(contact) {
+      var checked = e.target.checked;
+      var changedTag = e.target.id;
+      var appTag = app.tags.find(function(tag) {
+        return tag.name === changedTag;
+      });
+
+      if (contact.hasTag(changedTag)) {
+
+        if (checked) {
+          appTag.checked = true;
+          $('.card[data-id="' + contact.id + '"]').show();
+        } else {
+          appTag.checked = false;
+          $('#all').prop('checked', false);
+          if (this.allTagsInactive(contact)) {
+            $('.card[data-id="' + contact.id + '"]').hide();
+          }
+        }
+      }
+    }.bind(this));
+
+    this.allNoneOrSomeChecked();
+  },
+
+  toggleAllTags() {
+    if ($('#all').get(0).checked) {
+      $('.checkbox-tag').each(function() {
+        if (!this.checked) {
+          this.click();
+        }
+      });
+    } else {
+      $('.checkbox-tag').each(function() {
+        if (this.checked) {
+          this.click();
+        }
+      });
+    }
+  },
+
+  showOnlyTargetTag(e) {
+    if ($('#all').prop('checked')) {
+      $('#all').click();
+    } else {
+      this.toggleAllTags();
+    }
+
+    $('.checkbox-tag').filter(function() {
+      return $(this).parent().text() ===  e.target.textContent;
+    }).click();
+  },
+
+  checkAllTags() {
+    if ($('#all').prop('checked')) {
+      this.toggleAllTags();
+    } else {
+      $('#all').click();
+    }
+  },
+
+  allTagsInactive(contact) {
+    var inactiveTagCount = contact.tags.reduce(function(count, tag) {
+      if (!app.tags.find(function(currentTag) {
+        return currentTag.name === tag;
+      }).checked) {
+        count++;
+      }
+      return count;
+    }, 0);
+
+    return inactiveTagCount === contact.tags.length;
+  },
+
+  allNoneOrSomeChecked() {
+    // so ALL TAG checkbox updates itself and the
+    // 'no results' div is shown and hidden intelligently
+    var $noResults = $('.no-results');
+    var checkedCount = app.tags.reduce(function(count, tag) {
+      if (tag.checked) {
+        count++;
+      }
+      return count;
+    }, 0);
+
+    if (checkedCount === 0) {
+      $('#all').prop('checked', false);
+      $noResults.show();
+    } else {
+      if ($noResults.css('display') === 'block') {
+        $noResults.hide();
+      }
+      if (checkedCount === app.tags.length) {
+        $('#all').prop('checked', true);
       }
     }
   },
@@ -478,6 +483,15 @@ var Contact = {
     this.email = formData.email;
     this.phone = formData.phone;
     this.tags = this.processTags(formData);
+    return this;
+  },
+
+  restore(storedContact) {
+    this.id = storedContact.id;
+    this.name = storedContact.name;
+    this.email = storedContact.email;
+    this.phone = storedContact.phone;
+    this.tags = storedContact.tags;
     return this;
   },
 
@@ -497,18 +511,18 @@ var Contact = {
       return arr;
     }, []);
   },
-};
 
-function Tag(name)  {
-  this.name = name;
-  this.count = 1;
-  this.checked = true;
-}
+  hasTag(tag) {
+    return this.tags.find(function(currentTag) {
+      return currentTag === tag;
+    });
+  }
+};
 
 var search = {
   timeout: null,
 
-  emptyIfPopulated() {
+  reset() {
     if ($('.search').val() !== '') {
       $('.search').val('');
       $('.card').show();
@@ -516,11 +530,14 @@ var search = {
   },
 
   exe(e) {
-    var nameExp = new RegExp(e.target.value, 'i');
+    var searchString = e.target.value;
+    var nameExp = new RegExp(searchString, 'i');
     var $noResults = $('.no-results');
     var hideCount = 0;
 
-    app.checkAllTags(e.target.value);
+    view.checkAllTags();
+    $('.search').val(searchString);
+
     app.contacts.forEach(function(contact) {
       if (nameExp.test(contact.name)) {
         // easy to add email to search by || nameExp.test(contact.email) here
@@ -540,5 +557,11 @@ var search = {
     });
   },
 };
+
+function Tag(name)  {
+  this.name = name;
+  this.count = 1;
+  this.checked = true;
+}
 
 app.init();
